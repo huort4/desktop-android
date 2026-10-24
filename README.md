@@ -8,14 +8,15 @@
 
 - دسکتاپ XFCE در مرورگر دسکتاپ و موبایل
 - تمرکز اصلی روی گوشی‌های Android با لمس، trackpad مجازی و keyboard روی صفحه
-- Claude Desktop از مخزن رسمی Anthropic
-- Claude Code از npm
+- Claude Desktop از مخزن رسمی apt شرکت Anthropic
+- Claude Code از npm (Node.js 24 LTS)
+- ترمینال و `sudo` به‌صورت پیش‌فرض فعال‌اند تا Claude Code قابل استفاده باشد
 - نگهداری تنظیمات و home در volume مسیر `/config`
-- پروفایل کیفیت بالاتر برای دسکتاپ و پروفایل سبک‌تر برای موبایل
+- پروفایل کیفیت متعادل برای موبایل و امکان تغییر آن از `.env`
 
-## پیش‌نیاز مهم معماری
+## معماری‌های پشتیبانی‌شده
 
-Claude Desktop در حال حاضر بسته‌ی Linux برای `amd64` ارائه می‌کند. این پروژه عمداً برای `linux/amd64` تنظیم شده است. اجرای آن روی ARM فقط با emulation و با افت عملکرد احتمالی انجام می‌شود و پشتیبانی رسمی محسوب نمی‌شود.
+مخزن رسمی Claude Desktop برای Linux هم `amd64` و هم `arm64` بسته منتشر می‌کند، بنابراین این image روی هر دو ساخته می‌شود و CI هر دو معماری را build می‌کند. نسخه‌ی Linux هنوز بتا است و برخی قابلیت‌ها (مثل Computer Use) در آن وجود ندارد.
 
 ## اجرای محلی امن
 
@@ -25,13 +26,13 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-برای بازکردن محیط توسعه با پورت‌های فقط-localhost و تنظیمات سبک‌تر موبایل:
+برای محیط توسعه با پورت‌های فقط-localhost (نیازمند Docker Compose نسخه‌ی 2.24 یا بالاتر):
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
 
-- حالت عادی: `https://localhost:3001`
+- حالت عادی: `https://<host>:3001`
 - حالت توسعه: `https://localhost:3001` و در صورت نیاز `http://localhost:3000`
 - گواهی HTTPS پیش‌فرض self-signed است و ممکن است مرورگر هشدار نشان دهد.
 
@@ -39,20 +40,28 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 ## تنظیمات اصلی
 
+مقادیر پیش‌فرض در `Dockerfile` (بخش `ENV`) تعریف شده‌اند و `docker-compose.yml` همان‌ها را برای override از `.env` در دسترس می‌گذارد. Railway فقط Dockerfile را build می‌کند، پس همین مقادیر آنجا هم اعمال می‌شوند.
+
 | متغیر | مقدار پیش‌فرض | توضیح |
 |---|---:|---|
-| `WEBTOP_USER` | اجباری | نام کاربر webtop |
+| `WEBTOP_USER` | اجباری | نام کاربر webtop (در compose) |
 | `WEBTOP_PASSWORD` | اجباری | رمز ورود؛ در Git قرار نگیرد |
-| `MAX_RES` | `1920x1080` | حداکثر رزولوشن دسکتاپ |
-| `SELKIES_FRAMERATE` | `30` | تعداد فریم برای stream |
-| `SELKIES_H264_CRF` | `28` | مقدار بیشتر یعنی حجم کمتر و کیفیت پایین‌تر |
-| `SELKIES_AUDIO_ENABLED` | `false` | ضبط صدا؛ در صورت نیاز فعال شود |
-| `CPU_LIMIT` | `2` | سقف CPU کانتینر |
-| `MEMORY_LIMIT` | `4G` | سقف RAM کانتینر |
+| `MAX_RES` | `1280x720` | حداکثر رزولوشن دسکتاپ |
+| `SELKIES_FRAMERATE` | `24` | تعداد فریم برای stream |
+| `SELKIES_H264_CRF` | `30` | مقدار بیشتر یعنی حجم کمتر و کیفیت پایین‌تر |
+| `SELKIES_ENCODER` | `x264enc-striped` | انکودر ویدیو |
+| `SELKIES_AUDIO_ENABLED` | `false\|locked` | ضبط صدا؛ برای فعال‌سازی `true` بگذارید |
+| `PIXELFLUX_WAYLAND` | `false` | `false` یعنی X11 (توصیه‌شده)؛ `true` یعنی Wayland |
+| `CPU_LIMIT` | `4` | سقف CPU کانتینر (compose) |
+| `MEMORY_LIMIT` | `4G` | سقف RAM کانتینر (compose) |
+
+تنظیمات قفل‌شده‌ی دیگر (مثل `SELKIES_FILE_TRANSFERS` و `SELKIES_ENABLE_SHARING`) فقط در `Dockerfile` هستند. برای تغییر آن‌ها، متغیر را در بخش `environment` سرویس در compose اضافه کنید یا در Railway به Variables بدهید.
+
+> پسوند `|locked` یعنی کاربر نمی‌تواند آن گزینه را از داخل رابط تغییر دهد.
 
 ## تنظیمات Android
 
-پروفایل اصلی پروژه از ابتدا برای Android تنظیم شده است. در webtop/Selkies این امکانات برای گوشی نگه داشته شده‌اند:
+در webtop/Selkies این امکانات برای گوشی نگه داشته شده‌اند:
 
 - **Trackpad mode** برای حرکت نرم‌تر و نسبی موس با یک انگشت
 - **Direct touch mode** برای برنامه‌های لمسی
@@ -60,40 +69,34 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 - **Fullscreen** برای بیشترین فضای قابل استفاده
 - clipboard متنی برای کپی و paste بین گوشی و دسکتاپ
 
-برای کاهش شلوغی، مصرف اینترنت و سطح حمله، این قابلیت‌ها به‌صورت پیش‌فرض غیرفعال‌اند:
+برای کاهش شلوغی، مصرف اینترنت و سطح حمله، این موارد به‌صورت پیش‌فرض غیرفعال و قفل‌اند: صدا و میکروفون، gamepad، file upload/download، session sharing، binary clipboard، نمایشگر دوم، فرمان‌های command websocket، بخش Apps و بخش‌های غیرضروری sidebar.
 
-- صدا و میکروفون
-- gamepad و gaming mode
-- file upload/download
-- session sharing و collaboration
-- binary clipboard
-- نمایشگر دوم
-- دکمه‌ها و بخش‌های غیرضروری sidebar
+برای حرکت نرم‌تر موس، ابتدا در sidebar حالت **Trackpad** را انتخاب کنید. برای برنامه‌های touch-friendly، **Direct touch** مناسب‌تر است. اگر متن تار بود، در بخش Screen settings گزینه‌ی CSS scaling را خاموش کنید (این گزینه قفل نیست). خاموش‌کردن آن کیفیت متن را بالا می‌برد ولی مصرف دیتا را زیاد می‌کند.
 
-برای حرکت نرم‌تر موس، ابتدا در sidebar حالت **Trackpad** را انتخاب کنید. برای برنامه‌هایی که خودشان touch-friendly هستند، **Direct touch** مناسب‌تر است. در صورت تارشدن متن، از بخش Screen scaling حالت CSS را بررسی کنید؛ این پروژه برای کاهش مصرف دیتا آن را به‌صورت پیش‌فرض فعال کرده است.
+سه پروفایل آماده در `.env.example` هست: Speed (`960x540`، ۲۰ فریم، CRF 32)، Balanced (پیش‌فرض) و Quality (`1920x1080`، ۳۰ فریم، CRF 28). فقط یک بلوک را فعال نگه دارید. افزایش هم‌زمان رزولوشن و frame rate روی اینترنت موبایل، latency و مصرف دیتا را زیاد می‌کند.
 
-برای موبایل یا شبکه‌ی ضعیف، این profile را امتحان کنید:
+> اسکریپت `bin/android-perf.sh` تنظیمات XFCE روی X11 را سبک می‌کند (compositing، انیمیشن، wallpaper، screensaver). با `PIXELFLUX_WAYLAND=true` اثر آن محدود می‌شود.
 
-```env
-MAX_RES=1280x720
-SELKIES_FRAMERATE=24
-SELKIES_H264_CRF=30
-SELKIES_AUDIO_ENABLED=false
-```
+## ترمینال و sudo (سخت‌سازی)
 
-اگر کیفیت بیشتری لازم دارید، فقط این موارد را افزایش دهید:
+webtop یک متغیر `HARDEN_DESKTOP` دارد، ولی این پروژه **عمداً از آن استفاده نمی‌کند**: آن متغیر هم‌زمان `sudo` و ترمینال را غیرفعال می‌کند و Claude Code را بی‌فایده می‌سازد.
 
-```env
-MAX_RES=1920x1080
-SELKIES_FRAMERATE=30
-SELKIES_H264_CRF=28
-```
+به‌جای آن:
 
-افزایش هم‌زمان رزولوشن و frame rate روی اینترنت موبایل، latency و مصرف دیتا را زیاد می‌کند. برای استفاده‌ی روزمره‌ی Android، `1280x720` و ۲۴ فریم نقطه‌ی شروع پیشنهادی هستند.
+- **همیشه فعال:** فرمان‌های command websocket و بخش Apps و file transfer و sharing غیرفعال‌اند (در Dockerfile).
+- **ترمینال:** همیشه باز می‌ماند.
+- **sudo:** به‌صورت پیش‌فرض باز است. برای بستن فقط `sudo`، overlay اختیاری را اجرا کنید:
+
+  ```bash
+  docker compose -f docker-compose.yml -f docker-compose.hardened.yml up -d
+  ```
+
+  با این حالت `sudo apt install` بعد از startup کار نمی‌کند؛ بسته‌های لازم را در Dockerfile نصب کنید.
+- **`DISABLE_OPEN_TOOLS`** را قبل از ورود به حساب Claude روشن نکنید، چون `xdg-open` برای باز کردن مرورگر هنگام sign-in لازم است.
 
 ## Railway و انتشار عمومی
 
-برای Railway، متغیرهای `WEBTOP_USER`، `WEBTOP_PASSWORD` و تنظیمات عملکرد را در بخش **Variables** وارد کنید؛ آن‌ها را داخل repository قرار ندهید.
+برای Railway، متغیرهای `CUSTOM_USER` و `PASSWORD` (معادل `WEBTOP_USER` و `WEBTOP_PASSWORD` در compose) و تنظیمات عملکرد را در بخش **Variables** وارد کنید؛ آن‌ها را داخل repository قرار ندهید.
 
 پورت HTTPS داخلی سرویس `3001` است. اگر از دامنه‌ی عمومی استفاده می‌کنید:
 
@@ -101,24 +104,28 @@ SELKIES_H264_CRF=28
 2. ترجیحاً سرویس را پشت Reverse Proxy با TLS معتبر قرار دهید.
 3. پورت HTTP یعنی `3000` را مستقیماً عمومی نکنید.
 4. WebSocket را فعال و proxy buffering را خاموش کنید.
-5. قابلیت‌های غیرفعال‌شده‌ی Android مانند file transfer و sharing را فقط در صورت نیاز و با آگاهی از ریسک فعال کنید.
+5. قابلیت‌های غیرفعال‌شده مانند file transfer و sharing را فقط در صورت نیاز و با آگاهی از ریسک فعال کنید.
 6. برای Railway سقف هزینه و resource limit تعیین کنید؛ این سرویس به‌دلیل encoding مداوم سبک نیست.
 
 webtop یک محیط دسکتاپ کامل با terminal و `sudo` بدون رمز داخل کانتینر فراهم می‌کند. بنابراین انتشار بدون سخت‌سازی مناسب خطرناک است. جزئیات بیشتر در [SECURITY.md](SECURITY.md) آمده است.
 
+## Claude Desktop و sandbox
+
+Electron داخل Docker معمولاً sandbox کروم را ندارد (به user namespace نیاز دارد و seccomp پیش‌فرض Docker آن را می‌بندد). به همین دلیل Dockerfile به‌صورت پیش‌فرض Claude Desktop را با `--no-sandbox` اجرا می‌کند. اگر روی میزبان شما بدون آن هم کار می‌کند، با `--build-arg CLAUDE_NO_SANDBOX=false` بسازید.
+
 ## توسعه و CI
 
-فایل `.github/workflows/ci.yml` در هر push و pull request، Compose را validate می‌کند، image amd64 را build می‌کند و repository را برای secretهای accidentally committed اسکن می‌کند.
+فایل `.github/workflows/ci.yml` در هر push و pull request این کارها را انجام می‌دهد:
 
-برای مشاهده‌ی لاگ‌ها:
+- validate کردن هر سه ترکیب Compose و اطمینان از اینکه override توسعه پورت را دوبار bind نمی‌کند
+- shellcheck روی `bin/android-perf.sh`
+- build کردن image برای `amd64` و `arm64` (runner بومی؛ برای repository خصوصی ممکن است runner ARM در دسترس نباشد)
+- اسکن کل تاریخچه برای secretهای accidentally committed
+
+لاگ‌ها و توقف سرویس:
 
 ```bash
 docker compose logs -f desktop
-```
-
-برای توقف سرویس:
-
-```bash
 docker compose down
 ```
 
@@ -129,8 +136,11 @@ docker compose down
 ├── Dockerfile
 ├── docker-compose.yml
 ├── docker-compose.dev.yml
+├── docker-compose.hardened.yml
 ├── .env.example
 ├── .dockerignore
+├── bin/android-perf.sh
+├── autostart/android-perf.desktop
 ├── SECURITY.md
 ├── LICENSE
 ├── README.md

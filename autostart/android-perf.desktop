@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Android Perf Tweaks
+Comment=Disable compositing and animations for fast mobile streaming
+Exec=/usr/local/bin/android-perf.sh
+OnlyShowIn=XFCE;
+StartupNotify=false
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true

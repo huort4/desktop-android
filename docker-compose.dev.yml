@@ -1,14 +1,8 @@
+# Local development: bind everything to localhost only.
+# `!override` replaces the base `ports` list instead of appending to it
+# (otherwise 3001 would be bound twice). Requires Docker Compose >= 2.24.
 services:
   desktop:
-    ports:
+    ports: !override
       - "127.0.0.1:3000:3000"
       - "127.0.0.1:3001:3001"
-    environment:
-      MAX_RES: ${MAX_RES:-1280x720}
-      SELKIES_FRAMERATE: ${SELKIES_FRAMERATE:-24}
-      SELKIES_H264_CRF: ${SELKIES_H264_CRF:-30}
-      SELKIES_AUDIO_ENABLED: ${SELKIES_AUDIO_ENABLED:-false|locked}
-      SELKIES_MICROPHONE_ENABLED: ${SELKIES_MICROPHONE_ENABLED:-false|locked}
-      SELKIES_GAMEPAD_ENABLED: ${SELKIES_GAMEPAD_ENABLED:-false|locked}
-      SELKIES_FILE_TRANSFERS: ${SELKIES_FILE_TRANSFERS:-none|locked}
-      SELKIES_ENABLE_SHARING: ${SELKIES_ENABLE_SHARING:-false|locked}
