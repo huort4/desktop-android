@@ -18,9 +18,42 @@ jobs:
         run: |
           docker compose --env-file .env.example config --quiet
           docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.dev.yml config --quiet
+          docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.hardened.yml config --quiet
 
-      - name: Build amd64 image
-        run: docker build --platform linux/amd64 --tag claude-desktop-android:ci .
+      - name: Dev override must not bind ports twice
+        run: |
+          docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.dev.yml config \
+            | grep -c 'published: "3001"' | grep -qx 1
+
+      - name: Lint shell script
+        run: |
+          sudo apt-get install -y --no-install-recommends shellcheck
+          shellcheck bin/android-perf.sh
+
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build ${{ matrix.platform }} image
+        run: docker build --platform ${{ matrix.platform }} --tag claude-desktop-android:ci .
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Scan repository for accidental secrets
         uses: gitleaks/gitleaks-action@v2
