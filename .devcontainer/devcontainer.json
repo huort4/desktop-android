@@ -1,0 +1,52 @@
+{
+  // GitHub Codespaces: runs the desktop image directly (no Docker-in-Docker).
+  // Open the "Desktop" port (3000) from the Ports tab. The port stays PRIVATE,
+  // so only your signed-in GitHub account can reach it.
+  "name": "Android Remote Desktop",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": ".."
+  },
+
+  // Keep the image's s6 /init as the main process; it starts XFCE + Selkies.
+  "overrideCommand": false,
+  "runArgs": ["--shm-size=2g"],
+
+  // Desktop home (/config) lives in a named volume so it survives rebuilds.
+  "mounts": [
+    "source=android-desktop-config,target=/config,type=volume"
+  ],
+
+  // Codespaces' HTTPS port forwarding does TLS and GitHub login, so webtop's
+  // own basic auth is not needed here. Do NOT make this port public.
+  "containerEnv": {
+    "TZ": "Asia/Tehran"
+  },
+
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Desktop",
+      "protocol": "http",
+      "onAutoForward": "notify"
+    },
+    "3001": {
+      "onAutoForward": "ignore"
+    }
+  },
+  "otherPortsAttributes": {
+    "onAutoForward": "ignore"
+  },
+
+  // 2 cores / 8 GB is enough and gives 60 free hours per month.
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "8gb"
+  },
+
+  "customizations": {
+    "codespaces": {
+      "openFiles": ["README.md"]
+    }
+  }
+}
