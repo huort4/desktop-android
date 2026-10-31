@@ -2,17 +2,17 @@
 #   docker compose -f docker-compose.yml -f docker-compose.hardened.yml up -d
 #
 # Why not HARDEN_DESKTOP? It switches on DISABLE_SUDO *and* DISABLE_TERMINALS
-# (plus DISABLE_OPEN_TOOLS), which would make Claude Code unusable. This overlay
+# (plus DISABLE_OPEN_TOOLS), which would remove the desktop terminal. This overlay
 # enables only what is safe to turn on while keeping the terminal.
 #
 # DISABLE_SUDO removes passwordless root inside the container: no `sudo apt install`
 # after startup. Install what you need in the Dockerfile instead.
 #
-# DISABLE_OPEN_TOOLS is deliberately NOT enabled: xdg-open is how Claude Desktop
-# opens the browser for sign-in. Enable it only after you are logged in.
+# DISABLE_OPEN_TOOLS is deliberately NOT enabled: xdg-open opens links in the browser
+# (and is how the optional Claude Desktop signs in). Enable it only after you are logged in.
 services:
   desktop:
     environment:
       DISABLE_SUDO: "true"
       # DISABLE_OPEN_TOOLS: "true"
-      # DISABLE_TERMINALS: "true"   # would also disable Claude Code's terminal
+      # DISABLE_TERMINALS: "true"   # would remove every terminal

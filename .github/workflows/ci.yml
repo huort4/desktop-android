@@ -45,7 +45,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build ${{ matrix.platform }} image
-        run: docker build --platform ${{ matrix.platform }} --tag claude-desktop-android:ci .
+        run: docker build --platform ${{ matrix.platform }} --tag android-desktop:ci .
 
   secrets-scan:
     runs-on: ubuntu-latest

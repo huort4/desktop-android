@@ -1,44 +1,41 @@
 FROM lscr.io/linuxserver/webtop:ubuntu-xfce
 
-# Node.js major version used for Claude Code (npm).
-ARG NODE_MAJOR=24
+# Claude Desktop is optional. The default build is a plain desktop.
+#   docker build --build-arg INSTALL_CLAUDE_DESKTOP=true .
+ARG INSTALL_CLAUDE_DESKTOP=false
 # Electron's sandbox needs user namespaces, which Docker's default seccomp
-# profile blocks. Set to "false" if Claude Desktop starts fine without it.
+# profile blocks. Only used when INSTALL_CLAUDE_DESKTOP=true.
 ARG CLAUDE_NO_SANDBOX=true
 
-LABEL org.opencontainers.image.title="Claude Remote Desktop" \
-      org.opencontainers.image.description="Browser-accessible Ubuntu XFCE desktop with Claude Desktop and Claude Code preinstalled" \
+LABEL org.opencontainers.image.title="Android Remote Desktop" \
+      org.opencontainers.image.description="Browser-accessible Ubuntu XFCE desktop tuned for Android phones" \
       org.opencontainers.image.licenses="MIT"
 
-# ---- Prerequisites ----
+# ---- Everyday tools + Persian fonts ----
+# The base image already ships Chromium, Thunar, Mousepad and xfce4-terminal.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl gnupg ca-certificates && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      ca-certificates curl gnupg git nano htop \
+      fonts-vazirmatn fonts-noto-core && \
     rm -rf /var/lib/apt/lists/*
 
-# ---- Claude Desktop (official Anthropic apt repo; amd64 + arm64) ----
-RUN curl -fsSLo /usr/share/keyrings/claude-desktop-archive-keyring.asc \
-      https://downloads.claude.ai/claude-desktop/key.asc && \
-    echo "deb [signed-by=/usr/share/keyrings/claude-desktop-archive-keyring.asc] https://downloads.claude.ai/claude-desktop/apt/stable stable main" \
-      > /etc/apt/sources.list.d/claude-desktop.list && \
-    apt-get update && \
-    apt-get install -y claude-desktop && \
-    rm -rf /var/lib/apt/lists/*
-
-# ---- Run Claude Desktop with --no-sandbox inside the container ----
-RUN if [ "$CLAUDE_NO_SANDBOX" = "true" ]; then \
-      for f in /usr/share/applications/claude*.desktop; do \
-        if [ -f "$f" ]; then sed -i -E 's|^(Exec=[^ ]*claude-desktop)|\1 --no-sandbox|' "$f"; fi; \
-      done; \
-      printf '#!/bin/sh\nexec /usr/bin/claude-desktop --no-sandbox "$@"\n' > /usr/local/bin/claude-desktop; \
-      chmod +x /usr/local/bin/claude-desktop; \
+# ---- Optional: Claude Desktop (official Anthropic apt repo; amd64 + arm64) ----
+RUN if [ "$INSTALL_CLAUDE_DESKTOP" = "true" ]; then \
+      curl -fsSLo /usr/share/keyrings/claude-desktop-archive-keyring.asc \
+        https://downloads.claude.ai/claude-desktop/key.asc && \
+      echo "deb [signed-by=/usr/share/keyrings/claude-desktop-archive-keyring.asc] https://downloads.claude.ai/claude-desktop/apt/stable stable main" \
+        > /etc/apt/sources.list.d/claude-desktop.list && \
+      apt-get update && \
+      apt-get install -y claude-desktop && \
+      rm -rf /var/lib/apt/lists/* && \
+      if [ "$CLAUDE_NO_SANDBOX" = "true" ]; then \
+        for f in /usr/share/applications/claude*.desktop; do \
+          if [ -f "$f" ]; then sed -i -E 's|^(Exec=[^ ]*claude-desktop)|\1 --no-sandbox|' "$f"; fi; \
+        done; \
+        printf '#!/bin/sh\nexec /usr/bin/claude-desktop --no-sandbox "$@"\n' > /usr/local/bin/claude-desktop; \
+        chmod +x /usr/local/bin/claude-desktop; \
+      fi; \
     fi
-
-# ---- Node.js + Claude Code (CLI) ----
-RUN curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - && \
-    apt-get install -y --no-install-recommends nodejs && \
-    npm install -g @anthropic-ai/claude-code && \
-    npm cache clean --force && \
-    rm -rf /var/lib/apt/lists/*
 
 # ---- Android perf tweaks (disable compositing/animations via autostart) ----
 COPY bin/android-perf.sh /usr/local/bin/android-perf.sh
@@ -50,8 +47,8 @@ RUN chmod +x /usr/local/bin/android-perf.sh
 # docker-compose.yml only re-exposes the tuning knobs so .env can override them.
 #
 # NOTE: HARDEN_DESKTOP is intentionally NOT used. It bundles DISABLE_SUDO and
-# DISABLE_TERMINALS, which would break Claude Code. For opt-in sudo lockdown
-# see docker-compose.hardened.yml.
+# DISABLE_TERMINALS, which would remove the terminal from the desktop. For
+# opt-in sudo lockdown see docker-compose.hardened.yml.
 
 # Base + stream tuning (balanced mobile profile)
 ENV PUID=1000 \

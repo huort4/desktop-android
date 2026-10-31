@@ -1,24 +1,53 @@
-# Claude Remote Desktop
+# Android Remote Desktop
 
-یک دسکتاپ Ubuntu XFCE که از طریق مرورگر قابل استفاده است و Claude Desktop و Claude Code را در اختیار می‌گذارد. این پروژه بر پایه‌ی [`linuxserver/webtop`](https://github.com/linuxserver/docker-webtop) ساخته شده و برای اجرای Docker و Railway طراحی شده است.
-
-> **وضعیت پروژه:** در حال توسعه. قبل از انتشار عمومی، احراز هویت و HTTPS را تنظیم کنید.
+یک دسکتاپ واقعی Ubuntu XFCE که از مرورگر گوشی Android باز می‌شود. سنگینی کار روی سرور است و گوشی فقط تصویر را نشان می‌دهد. این پروژه بر پایه‌ی [`linuxserver/webtop`](https://github.com/linuxserver/docker-webtop) ساخته شده و روی GitHub Codespaces (رایگان)، Docker و Railway اجرا می‌شود.
 
 ## قابلیت‌ها
 
-- دسکتاپ XFCE در مرورگر دسکتاپ و موبایل
-- تمرکز اصلی روی گوشی‌های Android با لمس، trackpad مجازی و keyboard روی صفحه
-- Claude Desktop از مخزن رسمی apt شرکت Anthropic
-- Claude Code از npm (Node.js 24 LTS)
-- ترمینال و `sudo` به‌صورت پیش‌فرض فعال‌اند تا Claude Code قابل استفاده باشد
-- نگهداری تنظیمات و home در volume مسیر `/config`
-- پروفایل کیفیت متعادل برای موبایل و امکان تغییر آن از `.env`
+- دسکتاپ کامل XFCE با Chromium، ترمینال، مدیر فایل Thunar و ویرایشگر Mousepad
+- `git`، `nano`، `htop` و فونت فارسی Vazirmatn از پیش نصب‌شده
+- تمرکز روی Android: لمس، trackpad مجازی، keyboard روی صفحه و fullscreen
+- ترمینال و `sudo` فعال برای نصب هر برنامه‌ای که لازم دارید
+- پروفایل کیفیت متعادل برای اینترنت موبایل و امکان تغییر آن
+- Claude Desktop به‌صورت اختیاری (پیش‌فرض نصب نمی‌شود)
+
+## اجرای رایگان روی GitHub Codespaces (پیشنهادی)
+
+اکانت رایگان GitHub هر ماه ۱۲۰ ساعت-هسته Codespaces دارد؛ یعنی حدود ۶۰ ساعت روی ماشین ۲ هسته‌ای / ۸ گیگ. نیازی به کارت بانکی، سرور یا Docker روی گوشی نیست.
+
+1. در مرورگر گوشی وارد github.com شوید و این مخزن را باز کنید (در صورت نیاز با گزینه‌ی **Desktop site**).
+2. دکمه‌ی سبز **Code** ← تب **Codespaces** ← **Create codespace on main**.
+3. اولین ساخت چند دقیقه طول می‌کشد. بعد از باز شدن VS Code، تب **Ports** را باز کنید.
+4. روی آدرس پورت **Desktop (3000)** بزنید (آیکون کره). دسکتاپ در یک تب جدید باز می‌شود.
+5. برای بهترین حالت، از منوی مرورگر **Add to Home screen** را بزنید تا مثل یک اپ تمام‌صفحه باز شود.
+
+نکات مهم برای هدر نرفتن سهمیه:
+
+- وقتی کارتان تمام شد از github.com/codespaces گزینه‌ی **Stop codespace** را بزنید. فایل‌ها می‌مانند و فقط زمان روشن بودن حساب می‌شود.
+- کار با دسکتاپ از طریق پورت، برای Codespaces «فعالیت» حساب نمی‌شود؛ پس با timeout پیش‌فرض ۳۰ دقیقه، وسط کار خاموش می‌شود. در github.com/settings/codespaces مقدار **Default idle timeout** را تا سقف ۲۴۰ دقیقه (۴ ساعت) بالا ببرید و آخر کار حتماً خودتان Stop کنید؛ اگر فراموش کنید، تا ۴ ساعت از سهمیه‌ی ۶۰ ساعته هدر می‌رود. اگر خاموش شد، از github.com/codespaces دوباره Start کنید؛ تنظیمات و فایل‌های home حفظ می‌شوند.
+- در همان صفحه **Default retention period** را کوتاه کنید تا codespaceهای فراموش‌شده حذف شوند و ۱۵ گیگ فضای رایگان پر نشود.
+- ماشین ۴ هسته‌ای نسازید؛ سهمیه را دو برابر سریع‌تر مصرف می‌کند.
+- **هرگز** visibility پورت را Public نکنید. حالت Private یعنی فقط اکانت GitHub خودتان به دسکتاپ دسترسی دارد.
+- اگر صفحه‌ی دسکتاپ بالا نیامد، یک دقیقه صبر کنید و صفحه را refresh کنید؛ سرویس‌های دسکتاپ بعد از container بالا می‌آیند.
+
+## اجرا روی گوشی بدون سرور (آفلاین)
+
+اگر اینترنت ضعیف است یا سهمیه تمام شده، می‌توانید XFCE را مستقیماً روی گوشی با Termux و Termux:X11 اجرا کنید. این روش جزو این مخزن نیست ولی رایگان و آفلاین است:
+
+```bash
+pkg update && pkg upgrade -y
+pkg i x11-repo
+pkg i termux-x11-nightly xfce git
+termux-x11 :1 -xstartup "dbus-launch --exit-with-session xfce4-session"
+```
+
+سپس اپ Termux:X11 را باز کنید (APK آن فقط در GitHub releases پروژه‌ی termux/termux-x11 منتشر می‌شود).
 
 ## معماری‌های پشتیبانی‌شده
 
-مخزن رسمی Claude Desktop برای Linux هم `amd64` و هم `arm64` بسته منتشر می‌کند، بنابراین این image روی هر دو ساخته می‌شود و CI هر دو معماری را build می‌کند. نسخه‌ی Linux هنوز بتا است و برخی قابلیت‌ها (مثل Computer Use) در آن وجود ندارد.
+image روی `amd64` و `arm64` ساخته می‌شود و CI هر دو معماری را build می‌کند. Codespaces از `amd64` استفاده می‌کند.
 
-## اجرای محلی امن
+## اجرای محلی با Docker
 
 ```bash
 cp .env.example .env
@@ -79,7 +108,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 ## ترمینال و sudo (سخت‌سازی)
 
-webtop یک متغیر `HARDEN_DESKTOP` دارد، ولی این پروژه **عمداً از آن استفاده نمی‌کند**: آن متغیر هم‌زمان `sudo` و ترمینال را غیرفعال می‌کند و Claude Code را بی‌فایده می‌سازد.
+webtop یک متغیر `HARDEN_DESKTOP` دارد، ولی این پروژه **عمداً از آن استفاده نمی‌کند**: آن متغیر هم‌زمان `sudo` و ترمینال را غیرفعال می‌کند و دسکتاپ بدون ترمینال کاربرد چندانی ندارد.
 
 به‌جای آن:
 
@@ -92,26 +121,32 @@ webtop یک متغیر `HARDEN_DESKTOP` دارد، ولی این پروژه **ع
   ```
 
   با این حالت `sudo apt install` بعد از startup کار نمی‌کند؛ بسته‌های لازم را در Dockerfile نصب کنید.
-- **`DISABLE_OPEN_TOOLS`** را قبل از ورود به حساب Claude روشن نکنید، چون `xdg-open` برای باز کردن مرورگر هنگام sign-in لازم است.
+- **`DISABLE_OPEN_TOOLS`** باز کردن لینک‌ها در مرورگر را می‌بندد؛ اگر Claude Desktop را نصب کرده‌اید، آن را قبل از sign-in روشن نکنید.
 
-## Railway و انتشار عمومی
+## Railway (پولی)
 
-برای Railway، متغیرهای `CUSTOM_USER` و `PASSWORD` (معادل `WEBTOP_USER` و `WEBTOP_PASSWORD` در compose) و تنظیمات عملکرد را در بخش **Variables** وارد کنید؛ آن‌ها را داخل repository قرار ندهید.
+> **هزینه:** پلن رایگان Railway فقط ۱ دلار اعتبار ماهانه و حداکثر ۰.۵ گیگ RAM برای هر سرویس می‌دهد؛ این دسکتاپ با آن بالا نمی‌آید. پلن Hobby ماهی ۵ دلار است و مصرف اضافه جداگانه حساب می‌شود. برای استفاده‌ی رایگان از Codespaces استفاده کنید.
 
-پورت HTTPS داخلی سرویس `3001` است. اگر از دامنه‌ی عمومی استفاده می‌کنید:
+اگر Railway را انتخاب کردید، متغیرهای `CUSTOM_USER` و `PASSWORD` و تنظیمات عملکرد را در بخش **Variables** وارد کنید؛ آن‌ها را داخل repository قرار ندهید.
 
-1. احراز هویت را اجباری نگه دارید.
-2. ترجیحاً سرویس را پشت Reverse Proxy با TLS معتبر قرار دهید.
-3. پورت HTTP یعنی `3000` را مستقیماً عمومی نکنید.
-4. WebSocket را فعال و proxy buffering را خاموش کنید.
-5. قابلیت‌های غیرفعال‌شده مانند file transfer و sharing را فقط در صورت نیاز و با آگاهی از ریسک فعال کنید.
-6. برای Railway سقف هزینه و resource limit تعیین کنید؛ این سرویس به‌دلیل encoding مداوم سبک نیست.
+Railway خودش HTTPS معتبر می‌دهد و به سرویس با HTTP وصل می‌شود؛ بنابراین **target port** دامنه‌ی عمومی را `3000` بگذارید (پورت `3001` گواهی self-signed دارد و پشت پراکسی Railway مناسب نیست). همچنین:
 
-webtop یک محیط دسکتاپ کامل با terminal و `sudo` بدون رمز داخل کانتینر فراهم می‌کند. بنابراین انتشار بدون سخت‌سازی مناسب خطرناک است. جزئیات بیشتر در [SECURITY.md](SECURITY.md) آمده است.
+1. احراز هویت را اجباری نگه دارید (`CUSTOM_USER` و `PASSWORD`).
+2. WebSocket را فعال و proxy buffering را خاموش نگه دارید.
+3. قابلیت‌های غیرفعال‌شده مانند file transfer و sharing را فقط در صورت نیاز و با آگاهی از ریسک فعال کنید.
+4. سقف هزینه (usage limit) و resource limit تعیین کنید؛ این سرویس به‌دلیل encoding مداوم سبک نیست.
 
-## Claude Desktop و sandbox
+webtop یک محیط دسکتاپ کامل با terminal و `sudo` بدون رمز داخل کانتینر فراهم می‌کند. بنابراین انتشار بدون احراز هویت خطرناک است. جزئیات بیشتر در [SECURITY.md](SECURITY.md) آمده است.
 
-Electron داخل Docker معمولاً sandbox کروم را ندارد (به user namespace نیاز دارد و seccomp پیش‌فرض Docker آن را می‌بندد). به همین دلیل Dockerfile به‌صورت پیش‌فرض Claude Desktop را با `--no-sandbox` اجرا می‌کند. اگر روی میزبان شما بدون آن هم کار می‌کند، با `--build-arg CLAUDE_NO_SANDBOX=false` بسازید.
+## Claude Desktop (اختیاری)
+
+به‌صورت پیش‌فرض نصب نمی‌شود. برای نصب، image را با این build arg بسازید (یا در Railway به Variables بدهید):
+
+```bash
+docker compose build --build-arg INSTALL_CLAUDE_DESKTOP=true
+```
+
+Electron داخل Docker معمولاً sandbox کروم را ندارد، بنابراین Claude Desktop با `--no-sandbox` اجرا می‌شود. برای غیرفعال کردن این رفتار `--build-arg CLAUDE_NO_SANDBOX=false` بدهید.
 
 ## توسعه و CI
 
@@ -133,6 +168,7 @@ docker compose down
 
 ```text
 .
+├── .devcontainer/devcontainer.json
 ├── Dockerfile
 ├── docker-compose.yml
 ├── docker-compose.dev.yml
